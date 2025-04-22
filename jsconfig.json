@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "esnext",
     "moduleResolution": "node",
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
   },
   "exclude": [
     "node_modules",

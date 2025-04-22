@@ -1,15 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Dependencies } from '@nestjs/common';
 import "@shopify/shopify-api/adapters/node"
 import { shopifyApi, ApiVersion, DeliveryMethod } from '@shopify/shopify-api';
-
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
+@Dependencies(ConfigService)
 export class ShopifyService {
-  constructor() {
+  constructor(configService) {
+    this.configService = configService;
+
     this.shopify = shopifyApi({
-      scopes: ["read_orders"],
+      apiKey: this.configService.get('shopify.appProxy.clientId'),
+      apiSecretKey: this.configService.get('shopify.appProxy.clientSecret'),
+      scopes: this.configService.get('shopify.appProxy.scopes'),
       apiVersion: ApiVersion.April25,
-      isEmbeddedApp: false
+      isEmbeddedApp: false,
+      hostName: this.configService.get('appUrl')
     })
 
     this.shopify.webhooks.addHandlers({
@@ -19,7 +25,6 @@ export class ShopifyService {
         callback: this.handleOrdersCreate
       }]
     })
-
   }
 
   async handleOrdersCreate(topic, shop, webhookRequestBody, webhookId, apiVersion) {

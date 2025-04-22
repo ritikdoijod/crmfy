@@ -6,34 +6,38 @@ import {
   Res,
   Get,
   Post,
-  HttpCode,
-  Redirect,
-  Query,
+  Query
 } from '@nestjs/common';
 import { ShopifyService } from './shopify.service';
 import { ConfigService } from '@nestjs/config';
 
 @Controller('shopify')
-@Dependencies(ConfigService)
-@Dependencies(ShopifyService)
+@Dependencies([ConfigService, ShopifyService])
 export class ShopifyController {
   constructor(configService, shopifyService) {
     this.configService = configService;
     this.shopifyService = shopifyService;
   }
 
-  @Get('init')
-  @HttpCode(302)
-  @Redirect()
-  async init(@Query query) {
-    return {
-      url: `https://${query.shop}/admin/oauth/authorize?client_id=${this.configService.get('shopify.appProxy.clientId')}&scope=${this.configService.get('shopify.appProxy.scopes').join(',')}&redirect_uri=${this.configService.get('appUrl')}/shopify/auth/callback&state={nonce}&grant_options[]={access_mode}`,
-    };
+  @Get('auth')
+  @Bind(Query(), Req(), Res())
+  async auth(query, req, res) {
+    try {
+      await this.shopifyService.getShopifyClient().auth.begin({
+        shop: this.shopifyService.getShopifyClient().utils.sanitizeShop(query.shop, true),
+        callbackPath: "/shopify/auth/callback",
+        isOnline: false,
+        rawRequest: req,
+        rawResponse: res
+      })
+      return;
+    } catch (error) {
+      console.log("error in auth: ", error);
+    }
   }
 
   @Get('/auth/callback')
-  @Bind(Req())
-  @Bind(Res())
+  @Bind(Req(), Res())
   async handleAuthCallback(req, res) {
     try {
       const { session } = await this.shopifyService
@@ -43,15 +47,15 @@ export class ShopifyController {
           rawResponse: res,
         });
 
-      const response = await this.shopifyService
+      await this.shopifyService
         .getShopifyClient()
         .webhooks.register({
           session,
         });
 
-      console.log('webhooks response', response);
+      return;
     } catch (error) {
-      console.log(error);
+      console.log("error in auth callback: ", error);
     }
   }
 
@@ -65,9 +69,10 @@ export class ShopifyController {
         rawRequest: req,
         rawResponse: res,
       });
+      return req.body;
     } catch (error) {
-      console.log(error);
-      res.status(500).send(error.message)
+      console.log("error in webhook: ", error);
+      // res.status(500).send(error.message)
     }
   }
 }

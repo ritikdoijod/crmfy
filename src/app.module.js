@@ -3,13 +3,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ShopifyModule } from './shopify/shopify.module';
 import { ConfigModule } from '@nestjs/config';
-import appConfig from './app.config';
+import configuration from './config/configuration';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig],
+      load: [configuration],
     }),
     ShopifyModule,
   ],
@@ -17,4 +17,4 @@ import appConfig from './app.config';
   providers: [AppService],
 })
 
-export class AppModule {}
+export class AppModule { }
