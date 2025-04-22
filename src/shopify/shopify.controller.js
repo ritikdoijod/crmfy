@@ -6,7 +6,8 @@ import {
   Res,
   Get,
   Post,
-  Query
+  Query,
+  Redirect
 } from '@nestjs/common';
 import { ShopifyService } from './shopify.service';
 import { ConfigService } from '@nestjs/config';
@@ -30,15 +31,15 @@ export class ShopifyController {
         rawRequest: req,
         rawResponse: res
       })
-      return;
     } catch (error) {
       console.log("error in auth: ", error);
     }
   }
 
   @Get('/auth/callback')
-  @Bind(Req(), Res())
-  async handleAuthCallback(req, res) {
+  @Bind(Query(), Req(), Res())
+  @Redirect()
+  async handleAuthCallback(query, req, res) {
     try {
       const { session } = await this.shopifyService
         .getShopifyClient()
@@ -53,23 +54,23 @@ export class ShopifyController {
           session,
         });
 
-      return;
+      return {
+        url: `https://${query.shop}/setting/apps`
+      }
     } catch (error) {
       console.log("error in auth callback: ", error);
     }
   }
 
   @Post('webhooks/orders/create')
-  @Bind(Req())
-  @Bind(Res())
+  @Bind(Req(), Res())
   async handleWebhookOrderCreate(req, res) {
     try {
-      await this.shopifyService.getShopifyClient().webhooks.process({
-        rawBody: req.body,
-        rawRequest: req,
-        rawResponse: res,
-      });
-      return req.body;
+      console.log(req.rawBody)
+      // await this.shopifyService.getShopifyClient().webhooks.process({
+      //   rawRequest: req,
+      //   rawResponse: res,
+      // });
     } catch (error) {
       console.log("error in webhook: ", error);
       // res.status(500).send(error.message)
