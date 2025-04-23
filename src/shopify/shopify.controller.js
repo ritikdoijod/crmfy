@@ -66,11 +66,11 @@ export class ShopifyController {
   @Bind(Req(), Res())
   async handleWebhookOrderCreate(req, res) {
     try {
-      console.log(req.rawBody)
-      // await this.shopifyService.getShopifyClient().webhooks.process({
-      //   rawRequest: req,
-      //   rawResponse: res,
-      // });
+      await this.shopifyService.getShopifyClient().webhooks.process({
+        rawBody: req.rawBody.toString(),
+        rawRequest: req,
+        rawResponse: res,
+      });
     } catch (error) {
       console.log("error in webhook: ", error);
       // res.status(500).send(error.message)

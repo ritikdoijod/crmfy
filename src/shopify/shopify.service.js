@@ -22,7 +22,8 @@ export class ShopifyService {
       ORDERS_CREATE: [{
         deliveryMethod: DeliveryMethod.Http,
         callbackUrl: "/shopify/webhooks/orders/create",
-        callback: this.handleOrdersCreate
+        callback: this.handleOrdersCreate,
+        includeFields: ["id"]
       }]
     })
   }
